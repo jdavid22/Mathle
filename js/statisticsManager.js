@@ -17,6 +17,7 @@ class StatisticsManager {
       currentStreak: 0,
       bestStreak: 0,
       dist: [0, 0, 0, 0, 0, 0], // index i = games won in (i+1) guesses
+      miscalcs: 0, // Equation mode: guesses rejected for not balancing
     };
   }
 
@@ -50,6 +51,13 @@ class StatisticsManager {
     } else {
       this.stats.currentStreak = 0;
     }
+    this._save();
+  }
+
+  // Equation mode: the player typed an answer that doesn't match their own
+  // operands (e.g. 10 × 11 = 119). Recorded even though the guess is rejected.
+  recordMiscalc() {
+    this.stats.miscalcs = (this.stats.miscalcs || 0) + 1;
     this._save();
   }
 

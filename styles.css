@@ -104,6 +104,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* Centre the whole group so spare height sits above/below it rather than as a
+     gap between the puzzle and the keypad. When content is taller than the
+     viewport this is a no-op and the page simply scrolls. */
+  justify-content: center;
 }
 
 /* ---- Target ---- */
@@ -251,7 +255,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: auto;
 }
 .key-row { display: flex; gap: 6px; justify-content: center; }
 .key {
@@ -456,7 +459,18 @@ body {
 body.mode-equation { --tile-size: clamp(28px, 7.6vw, 40px); --gap: 4px; }
 body.mode-equation .target { display: none; }   /* nothing is given away */
 body.mode-classic .key-eq { display: none; }    /* "=" only used in Equation */
-body.hints-off .hint { display: none; }          /* hide higher/lower pills */
+
+/* Each mode shows only its own help text and stats. */
+body.mode-classic .help-equation { display: none; }
+body.mode-equation .help-classic { display: none; }
+body.mode-classic .stat-extra { display: none; } /* miscalcs are Equation-only */
+.stat-extra {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.stat-extra strong { color: var(--text); }
 
 /* Blank padding cell — clearly emptier than an unfilled tile, but still grades. */
 .tile.blank {

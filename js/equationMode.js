@@ -194,7 +194,8 @@ class EquationValidator {
     const actual = evaluateEquation(a, op, b);
     if (actual !== c) {
       // Reveal the guess's own arithmetic (not the answer) so the rule is clear.
-      return { ok: false, message: `Doesn’t balance: ${a} ${op} ${b} = ${actual}.` };
+      // `reason` lets the controller record this as a miscalculation.
+      return { ok: false, reason: 'unbalanced', message: `Doesn’t balance: ${a} ${op} ${b} = ${actual}.` };
     }
     return { ok: true, a, op, b, c };
   }

@@ -26,11 +26,10 @@ class Game {
     this.ui = new UIRenderer();
 
     this.maxGuesses = 6;
-    this.mode = 'daily';          // daily | unlimited
-    this.gameType = 'classic';    // classic | equation
-    this.hints = localStorage.getItem('mathle-hints') !== '0'; // default on
+    this.mode = 'daily';                 // daily | unlimited
+    this.gameType = this._typeFromURL(); // classic | equation (default equation)
+    this.hints = true;                   // Higher/Lower hints are always on
 
-    document.body.classList.toggle('hints-off', !this.hints);
     if (localStorage.getItem('mathle-colorblind') === '1') {
       document.body.classList.add('colorblind');
     }
@@ -38,6 +37,27 @@ class Game {
     this._bindGlobalControls();
     this._bindInput();
     this.newGame('daily');
+
+    // Each mode has its own shareable URL (?mode=…); ensure it's reflected.
+    this._syncURL(true);
+    // Pop the mode-specific help on load (unless a finished Daily is showing).
+    if (this.status === 'playing') this.ui.openModal('help-modal');
+  }
+
+  // Read the game type from the URL so each mode has a distinct, shareable link.
+  _typeFromURL() {
+    const m = new URLSearchParams(location.search).get('mode');
+    return m === 'classic' ? 'classic' : 'equation';
+  }
+
+  // Reflect the current game type in the address bar.
+  _syncURL(replace) {
+    const url = `${location.pathname}?mode=${this.gameType}`;
+    const state = { mode: this.gameType };
+    try {
+      if (replace) history.replaceState(state, '', url);
+      else history.pushState(state, '', url);
+    } catch { /* file:// or restricted history — ignore */ }
   }
 
   get isEquation() {
@@ -100,21 +120,6 @@ class Game {
       }
     }
     this.status = saved.status || this.status;
-  }
-
-  // Rebuild the possibility space from scratch and re-apply every guess — used
-  // when the hints setting changes mid-game (it alters the feedback channel).
-  _recomputeCandidates() {
-    const eq = this.isEquation;
-    const engine = eq ? this.eqEngine : this.entropy;
-    const fbEngine = eq ? this.eqFeedback : this.feedback;
-    let cands = eq ? this.eqEngine.universe().slice() : this.entropy.buildCandidates(this.puzzle.result);
-    for (const g of this.guesses) {
-      const guess = { a: g.a, op: g.op, b: g.b, c: g.c };
-      const sig = this.hints ? fbEngine.signature(g.fb) : fbEngine.signatureNoHints(g.fb);
-      cands = engine.filter(cands, guess, sig, this.hints);
-    }
-    this.candidates = cands;
   }
 
   // ---- Input handling ----------------------------------------------------
@@ -184,6 +189,8 @@ class Game {
     const I = this.eqInput;
     const check = this.eqValidator.validate(I.first, I.op, I.second, I.result);
     if (!check.ok) {
+      // Track answers that don't match the player's own operands (e.g. 10×11=119).
+      if (check.reason === 'unbalanced') this.stats.recordMiscalc();
       this.ui.showToast(check.message);
       this.ui.shakeCurrentRow();
       return;
@@ -343,7 +350,9 @@ class Game {
       }
       return `${first}${opSq(g.fb.operator)}${second}`;
     });
-    return `${head} ${score}/6\n\n${lines.join('\n')}`;
+    // Link to this exact mode so recipients land in the same game.
+    const url = `${location.origin}${location.pathname}?mode=${this.gameType}`;
+    return `${head} ${score}/6\n\n${lines.join('\n')}\n\n${url}`;
   }
 
   async copyShare() {
@@ -391,16 +400,17 @@ class Game {
     const on = (id, fn) => document.getElementById(id).addEventListener('click', fn);
 
     on('mode-toggle', () => this.newGame(this.mode === 'daily' ? 'unlimited' : 'daily'));
-    on('type-toggle', () => {
-      this.gameType = this.isEquation ? 'classic' : 'equation';
-      this._recorded = false;
-      this.newGame(this.mode);
-    });
-    on('hints-toggle', () => this._toggleHints());
+    on('type-toggle', () => this._switchType(this.isEquation ? 'classic' : 'equation'));
     on('new-game-btn', () => {
-      // In daily mode "New" just reloads today's puzzle; unlimited gets a fresh one.
+      // Unlimited rerolls a fresh puzzle; Daily reloads today's (it can't reroll).
       this._recorded = false;
-      this.newGame(this.mode === 'unlimited' ? 'unlimited' : 'daily');
+      if (this.mode === 'unlimited') {
+        this.newGame('unlimited');
+        this.ui.showToast('New puzzle');
+      } else {
+        this.newGame('daily');
+        this.ui.showToast('Daily puzzle reloaded');
+      }
     });
 
     on('help-btn', () => this.ui.openModal('help-modal'));
@@ -415,6 +425,12 @@ class Game {
       el.addEventListener('click', () => this.ui.closeModals())
     );
 
+    // Keep game type in sync with browser back/forward between the two URLs.
+    window.addEventListener('popstate', () => {
+      const gt = this._typeFromURL();
+      if (gt !== this.gameType) this._switchType(gt, false);
+    });
+
     on('share-btn', () => this.copyShare());
     on('playagain-btn', () => {
       this.ui.closeModals();
@@ -424,19 +440,15 @@ class Game {
     });
   }
 
-  _toggleHints() {
-    this.hints = !this.hints;
-    try {
-      localStorage.setItem('mathle-hints', this.hints ? '1' : '0');
-    } catch { /* ignore */ }
-    document.body.classList.toggle('hints-off', !this.hints);
-    // Re-derive the possibility space for the new feedback channel, then redraw.
-    const before = this.candidates.length;
-    this._recomputeCandidates();
-    this.render();
-    this.ui.renderEntropy(before, this.candidates.length, this.initialCount);
-    this.prevCount = this.candidates.length;
-    this.ui.showToast(this.hints ? 'Higher/Lower hints on' : 'Hints off (harder)');
+  // Switch between Classic and Equation, update the URL, and notify the player.
+  // `pushHistory` is false when the switch is itself driven by browser nav.
+  _switchType(type, pushHistory = true) {
+    if (type === this.gameType) return;
+    this.gameType = type;
+    this._recorded = false;
+    if (pushHistory) this._syncURL(false);
+    this.newGame(this.mode);
+    this.ui.showToast(this.isEquation ? 'Switched to Equation mode' : 'Switched to Classic mode');
   }
 
   _toggleColorblind() {

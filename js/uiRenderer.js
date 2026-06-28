@@ -320,6 +320,7 @@ class UIRenderer {
     document.getElementById('stat-winpct').textContent = statsMgr.winPct();
     document.getElementById('stat-streak').textContent = stats.currentStreak;
     document.getElementById('stat-best').textContent = stats.bestStreak;
+    document.getElementById('stat-miscalc').textContent = stats.miscalcs || 0;
 
     const maxDist = Math.max(1, ...stats.dist);
     const container = document.getElementById('dist-bars');
