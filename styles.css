@@ -42,7 +42,8 @@ body {
   -webkit-font-smoothing: antialiased;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100dvh;       /* lock to the (dynamic) viewport */
+  overflow: hidden;     /* the page itself never scrolls */
   touch-action: manipulation;
 }
 
@@ -97,6 +98,7 @@ body {
 /* ---- Layout ---- */
 .game {
   flex: 1;
+  min-height: 0; /* allow the board region inside to shrink instead of overflowing */
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
@@ -104,10 +106,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  /* Centre the whole group so spare height sits above/below it rather than as a
-     gap between the puzzle and the keypad. When content is taller than the
-     viewport this is a no-op and the page simply scrolls. */
-  justify-content: center;
 }
 
 /* ---- Target ---- */
@@ -126,11 +124,25 @@ body {
 }
 
 /* ---- Board ---- */
+/* The board is a flex region that soaks up all spare vertical space, so the
+   meter and keypad below it stay put. Its rows live in .board-rows, which is
+   scaled down by JS if it would ever exceed this region (keeping the whole
+   game on one non-scrolling screen). */
 .board {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.board-rows {
   display: flex;
   flex-direction: column;
   gap: 10px;
   align-items: center;
+  transform-origin: center center;
 }
 .row {
   display: flex;

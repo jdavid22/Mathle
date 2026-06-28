@@ -42,6 +42,9 @@ class Game {
     this._syncURL(true);
     // Pop the mode-specific help on load (unless a finished Daily is showing).
     if (this.status === 'playing') this.ui.openModal('help-modal');
+
+    // Re-fit once layout (and fonts) have fully settled.
+    requestAnimationFrame(() => this.ui._fitBoard());
   }
 
   // Read the game type from the URL so each mode has a distinct, shareable link.
@@ -394,6 +397,12 @@ class Game {
       else if (k === '/') { this.handleKey('÷'); e.preventDefault(); }
       else if (k === '=') { this.handleKey('='); }
     });
+
+    // Keep the board scaled to fit whenever the viewport changes.
+    window.addEventListener('resize', () => this.ui._fitBoard());
+    window.addEventListener('orientationchange', () =>
+      setTimeout(() => this.ui._fitBoard(), 150)
+    );
   }
 
   _bindGlobalControls() {

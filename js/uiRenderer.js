@@ -83,11 +83,31 @@ class UIRenderer {
     return wrap;
   }
 
+  // Swap freshly-built rows into the board region and rescale to fit.
+  _mountRows(rowsEl) {
+    this.dom.board.innerHTML = '';
+    this.dom.board.appendChild(rowsEl);
+    this._boardRows = rowsEl;
+    this._fitBoard();
+  }
+
+  // Scale the rows down if (and only if) they'd overflow the board region, so
+  // the whole game always fits one non-scrolling screen. offsetHeight is the
+  // pre-transform layout height, so this is idempotent.
+  _fitBoard() {
+    const rows = this._boardRows;
+    if (!rows) return;
+    const avail = this.dom.board.clientHeight;
+    const natural = rows.offsetHeight;
+    const scale = natural > avail && natural > 0 ? avail / natural : 1;
+    rows.style.transform = scale < 1 ? `scale(${scale})` : '';
+  }
+
   // Render the full 6-row board from game state.
   renderBoard(game) {
     if (game.gameType === 'equation') return this.renderEquationBoard(game);
-    const board = this.dom.board;
-    board.innerHTML = '';
+    const board = document.createElement('div');
+    board.className = 'board-rows';
 
     for (let row = 0; row < game.maxGuesses; row++) {
       const rowEl = document.createElement('div');
@@ -132,6 +152,7 @@ class UIRenderer {
       }
       board.appendChild(rowEl);
     }
+    this._mountRows(board);
   }
 
   _resultLabel(result, target) {
@@ -190,8 +211,8 @@ class UIRenderer {
   }
 
   renderEquationBoard(game) {
-    const board = this.dom.board;
-    board.innerHTML = '';
+    const board = document.createElement('div');
+    board.className = 'board-rows';
 
     for (let row = 0; row < game.maxGuesses; row++) {
       const rowEl = document.createElement('div');
@@ -231,6 +252,7 @@ class UIRenderer {
       }
       board.appendChild(rowEl);
     }
+    this._mountRows(board);
   }
 
   // ---- Entropy meter -----------------------------------------------------
@@ -259,29 +281,61 @@ class UIRenderer {
 
   // ---- Keypad ------------------------------------------------------------
 
-  // Colour each key by the best status that digit/operator has achieved.
+  // Colour each key with the conventional keyboard meaning:
+  //   green  = you've placed this digit correctly somewhere
+  //   yellow = this digit is in the hidden answer, but not yet placed
+  //   grey   = this digit is NOT in the answer anywhere
+  //
+  // Tiles are graded per field (per operand / the result), so a digit can be
+  // grey on a tile yet still live in another field. The keyboard therefore can't
+  // just echo the best tile colour — that would grey out digits that are really
+  // in the answer. Instead we judge membership against the whole hidden answer,
+  // and only colour digits the player has actually tried.
   updateKeyboard(game) {
-    const rank = { correct: 3, present: 2, absent: 1, '': 0 };
-    const best = {};
-    const consider = (key, state) => {
-      if ((rank[state] || 0) > (rank[best[key]] || 0)) best[key] = state;
+    const eq = game.gameType === 'equation';
+    const guessed = new Set(); // digits the player has entered
+    const greens = new Set();  // digits placed correctly in some field
+    const opState = {};        // operator key -> 'correct' | 'absent'
+
+    const scan = (cells, states) => {
+      cells.forEach((d, i) => {
+        if (d === BLANK) return;
+        guessed.add(d);
+        if (states[i] === 'correct') greens.add(d);
+      });
     };
-    const skipBlank = (d, st) => { if (d !== BLANK) consider(d, st); };
     for (const g of game.guesses) {
-      if (game.gameType === 'equation') {
-        padCells(g.a, 2).forEach((d, i) => skipBlank(d, g.fb.first[i]));
-        padCells(g.b, 2).forEach((d, i) => skipBlank(d, g.fb.second[i]));
-        padCells(g.c, 4).forEach((d, i) => skipBlank(d, g.fb.result[i]));
+      if (eq) {
+        scan(padCells(g.a, 2), g.fb.first);
+        scan(padCells(g.b, 2), g.fb.second);
+        scan(padCells(g.c, 4), g.fb.result);
       } else {
-        digits3(g.a).forEach((d, i) => consider(d, g.fb.first[i]));
-        digits3(g.b).forEach((d, i) => consider(d, g.fb.second[i]));
+        scan(digits3(g.a), g.fb.first);
+        scan(digits3(g.b), g.fb.second);
       }
-      consider(g.op, g.fb.operator);
+      if (g.fb.operator === 'correct') opState[g.op] = 'correct';
+      else if (!opState[g.op]) opState[g.op] = 'absent';
     }
+
+    // Every digit that appears anywhere in the hidden answer. (Classic's result
+    // is shown, not part of the hidden answer, so only its operands count.)
+    const nums = eq
+      ? [game.puzzle.a, game.puzzle.b, game.puzzle.c]
+      : [game.puzzle.a, game.puzzle.b];
+    const answerDigits = new Set();
+    for (const n of nums) for (const ch of String(n)) answerDigits.add(ch);
+
     this.dom.keypad.querySelectorAll('button[data-key]').forEach((btn) => {
       const key = btn.dataset.key;
       btn.classList.remove('correct', 'present', 'absent');
-      if (best[key]) btn.classList.add(best[key]);
+      if (/^[0-9]$/.test(key)) {
+        if (!guessed.has(key)) return; // only colour digits actually tried
+        btn.classList.add(
+          greens.has(key) ? 'correct' : answerDigits.has(key) ? 'present' : 'absent'
+        );
+      } else if (opState[key]) {
+        btn.classList.add(opState[key]);
+      }
     });
   }
 
