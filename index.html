@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f1117" />
+  <title>Mathle — Math Wordle</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Mathle</h1>
+      <span class="mode-badge">
+        <span id="mode-label">Daily</span>
+        <span id="puzzle-tag" class="puzzle-tag">#1</span>
+      </span>
+    </div>
+    <div class="top-actions">
+      <button id="mode-toggle" class="icon-btn" title="Switch Daily / Unlimited" aria-label="Switch mode">⇄</button>
+      <button id="new-game-btn" class="icon-btn" title="New puzzle" aria-label="New puzzle">↻</button>
+      <button id="colorblind-btn" class="icon-btn" title="Colorblind mode" aria-label="Colorblind mode">◐</button>
+      <button id="stats-btn" class="icon-btn" title="Statistics" aria-label="Statistics">📊</button>
+      <button id="help-btn" class="icon-btn" title="How to play" aria-label="Help">?</button>
+    </div>
+  </header>
+
+  <main class="game">
+    <section class="target">
+      <div class="target-label">Target result</div>
+      <div id="target-result" class="target-value">—</div>
+    </section>
+
+    <section id="board" class="board" aria-label="Guesses"></section>
+
+    <section class="entropy" aria-label="Remaining possibilities">
+      <div class="entropy-head">
+        <span class="entropy-label">Remaining possibilities</span>
+        <span id="entropy-value" class="entropy-value">—</span>
+      </div>
+      <div class="entropy-track"><div id="entropy-bar" class="entropy-bar"></div></div>
+    </section>
+
+    <section id="keypad" class="keypad" aria-label="Keypad">
+      <div class="key-row">
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+      </div>
+      <div class="key-row">
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key" data-key="0">0</button>
+      </div>
+      <div class="key-row">
+        <button class="key op-key" data-key="+">+</button>
+        <button class="key op-key" data-key="−">−</button>
+        <button class="key op-key" data-key="×">×</button>
+        <button class="key op-key" data-key="÷">÷</button>
+      </div>
+      <div class="key-row">
+        <button class="key wide" data-key="del">⌫ Delete</button>
+        <button class="key wide accent" data-key="enter">Enter</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Overlay + modals -->
+  <div id="overlay" class="overlay"></div>
+
+  <div id="help-modal" class="modal">
+    <button class="modal-close" data-close aria-label="Close">×</button>
+    <h2>How to play</h2>
+    <p>Find the hidden equation that produces the <strong>target result</strong>.
+       Guess a <strong>three-digit number</strong>, an <strong>operator</strong>
+       (+ − × ÷), and another <strong>three-digit number</strong>. The result is
+       computed for you.</p>
+    <ul class="legend">
+      <li><span class="swatch correct"></span> Right digit, right spot</li>
+      <li><span class="swatch present"></span> Digit is in that number, wrong spot</li>
+      <li><span class="swatch absent"></span> Digit not in that number</li>
+    </ul>
+    <p>The operator tile turns green when it's correct. Each number also shows an
+       arrow: <strong>↑</strong> means the hidden value is higher,
+       <strong>↓</strong> means lower (compared by full value, not digits).</p>
+    <p>The <strong>Remaining possibilities</strong> meter shows how many equations
+       still fit everything you've learned. You have <strong>6 guesses</strong>.</p>
+  </div>
+
+  <div id="stats-modal" class="modal">
+    <button class="modal-close" data-close aria-label="Close">×</button>
+    <h2>Statistics</h2>
+    <div class="stats-grid">
+      <div><div id="stat-played" class="stat-num">0</div><div class="stat-cap">Played</div></div>
+      <div><div id="stat-winpct" class="stat-num">0</div><div class="stat-cap">Win %</div></div>
+      <div><div id="stat-streak" class="stat-num">0</div><div class="stat-cap">Streak</div></div>
+      <div><div id="stat-best" class="stat-num">0</div><div class="stat-cap">Best</div></div>
+    </div>
+    <h3>Guess distribution</h3>
+    <div id="dist-bars" class="dist-bars"></div>
+  </div>
+
+  <div id="gameover-modal" class="modal">
+    <button class="modal-close" data-close aria-label="Close">×</button>
+    <h2 id="gameover-title">Solved!</h2>
+    <p id="gameover-sub" class="gameover-sub"></p>
+    <div id="result-equation" class="result-equation"></div>
+    <div class="gameover-actions">
+      <button id="share-btn" class="btn">Share</button>
+      <button id="playagain-btn" class="btn accent">Play again</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Modules, loaded in dependency order (classic scripts share globals). -->
+  <script src="js/constants.js"></script>
+  <script src="js/rng.js"></script>
+  <script src="js/feedbackEngine.js"></script>
+  <script src="js/entropyCalculator.js"></script>
+  <script src="js/puzzleGenerator.js"></script>
+  <script src="js/guessValidator.js"></script>
+  <script src="js/statisticsManager.js"></script>
+  <script src="js/dailyPuzzle.js"></script>
+  <script src="js/uiRenderer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
