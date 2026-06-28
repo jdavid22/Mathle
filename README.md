@@ -24,9 +24,24 @@ Six guesses. Win or the answer is revealed.
 
 ## Modes
 
+Two independent axes, toggled from the header:
+
+**Game type**
+- **Classic** — the result is shown; deduce the two 3-digit operands and the operator.
+- **Equation** — nothing is shown. Guess a whole equation (two 1–2 digit numbers,
+  an operator, and the 4-digit answer) that must *balance*. Numbers sit in
+  fixed-width fields left-padded with **blank** cells, and blanks are graded like
+  digits — a green blank means that number is shorter than its box. (~25k
+  possibility space, tuned to roughly Wordle/Nerdle difficulty.)
+
+**Schedule**
 - **Daily** — one deterministic puzzle per calendar day, identical for everyone.
-  Progress is saved, so a refresh resumes where you left off.
+  Progress is saved, so a refresh resumes where you left off. (Classic and
+  Equation have separate dailies.)
 - **Unlimited** — endless random puzzles. Toggle with the ⇄ button.
+
+**Hints** — the ↕ button turns the Higher/Lower pills off for a harder game
+(applies to both types; the possibility meter accounts for it).
 
 ## Features
 
@@ -58,5 +73,6 @@ in dependency order from `index.html`):
 | `entropyCalculator.js` | enumerates & filters the remaining-possibility space |
 | `statisticsManager.js` | localStorage stats |
 | `dailyPuzzle.js` | date-seeded puzzle + Daily progress persistence |
+| `equationMode.js` | Equation-mode feedback, universe, generator, validator |
 | `uiRenderer.js` | all DOM rendering (board, meter, keypad, modals) |
 | `main.js` | `Game` controller wiring it together |

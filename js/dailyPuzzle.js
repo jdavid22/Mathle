@@ -7,9 +7,10 @@
  * player left off (and a finished Daily can't be replayed).
  */
 class DailyPuzzle {
-  constructor(generator, storageKey = 'mathle-daily') {
+  constructor(generator, storageKey = 'mathle-daily', salt = '') {
     this.generator = generator;
     this.key = storageKey;
+    this.salt = salt; // distinguishes seeds across game types on the same date
   }
 
   // Local YYYY-MM-DD for a given date (defaults to today).
@@ -41,7 +42,7 @@ class DailyPuzzle {
   // Build today's deterministic puzzle plus its metadata.
   generateForToday() {
     const date = this.todayString();
-    const rng = new SeededRandom(this._seedFromDate(date));
+    const rng = new SeededRandom(this._seedFromDate(date + this.salt));
     return {
       puzzle: this.generator.generate(rng),
       date,

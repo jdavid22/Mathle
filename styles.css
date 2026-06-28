@@ -51,6 +51,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px 10px;
+  flex-wrap: wrap; /* controls drop to a second line rather than clipping */
   padding: 12px 14px;
   border-bottom: 1px solid var(--tile-border);
   background: var(--panel);
@@ -58,6 +60,7 @@ body {
   top: 0;
   z-index: 5;
 }
+.top-actions { flex-wrap: wrap; justify-content: flex-end; }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand h1 {
   font-size: 1.45rem;
@@ -434,8 +437,59 @@ body {
   .tile.reveal, .row.shake, .row.win-bounce .tile { animation: none; }
 }
 
+/* ---- Game-type toggle button ---- */
+.text-btn {
+  background: var(--panel-2);
+  border: 1px solid var(--tile-border);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  align-self: center;
+}
+.text-btn:hover { background: var(--tile); }
+
+/* ---- Equation mode ---- */
+body.mode-equation { --tile-size: clamp(28px, 7.6vw, 40px); --gap: 4px; }
+body.mode-equation .target { display: none; }   /* nothing is given away */
+body.mode-classic .key-eq { display: none; }    /* "=" only used in Equation */
+body.hints-off .hint { display: none; }          /* hide higher/lower pills */
+
+/* Blank padding cell — clearly emptier than an unfilled tile, but still grades. */
+.tile.blank {
+  background: #12151c;
+  border-color: #232833;
+  border-style: dashed;
+}
+.tile.blank.correct { background: var(--correct); border-color: var(--correct); border-style: solid; }
+.tile.blank.present { background: var(--present); border-color: var(--present); border-style: solid; }
+.tile.blank.absent  { background: #14171f; border-color: var(--tile-border); border-style: solid; }
+
+/* Static "=" separator between the second operand and the result. */
+.tile.sep {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-weight: 700;
+  width: auto;
+  min-width: 14px;
+}
+
+/* Highlight the field currently receiving input. */
+.operand.active .tile {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
 /* ---- Mobile ---- */
 .keypad { padding-bottom: env(safe-area-inset-bottom, 0); }
+@media (max-width: 520px) {
+  body.mode-equation { --tile-size: clamp(22px, 7vw, 33px); --gap: 3px; }
+  .text-btn { font-size: 0.7rem; height: 28px; padding: 0 8px; }
+}
 
 @media (max-width: 520px) {
   :root {

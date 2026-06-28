@@ -68,6 +68,14 @@ class FeedbackEngine {
     return `${f}|${fb.operator[0]}|${s}|${fb.firstHint[0]}${fb.secondHint[0]}`;
   }
 
+  // Same signature minus the higher/lower hints, for when hints are disabled —
+  // the possibility space must then ignore that channel too.
+  signatureNoHints(fb) {
+    const f = fb.first.map((s) => s[0]).join('');
+    const s = fb.second.map((x) => x[0]).join('');
+    return `${f}|${fb.operator[0]}|${s}`;
+  }
+
   isWin(fb) {
     return (
       fb.first.every((s) => s === 'correct') &&

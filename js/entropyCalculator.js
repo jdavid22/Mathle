@@ -45,9 +45,12 @@ class EntropyCalculator {
   }
 
   // Keep only candidates that would have produced the same feedback signature.
-  filter(candidates, guess, observedSignature) {
-    return candidates.filter(
-      (cand) => this.fb.signature(this.fb.grade(guess, cand)) === observedSignature
-    );
+  // `useHints` chooses whether the higher/lower channel is part of the match.
+  filter(candidates, guess, observedSignature, useHints = true) {
+    return candidates.filter((cand) => {
+      const fb = this.fb.grade(guess, cand);
+      const sig = useHints ? this.fb.signature(fb) : this.fb.signatureNoHints(fb);
+      return sig === observedSignature;
+    });
   }
 }

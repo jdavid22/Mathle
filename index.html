@@ -17,8 +17,10 @@
       </span>
     </div>
     <div class="top-actions">
+      <button id="type-toggle" class="text-btn" title="Switch Classic / Equation mode" aria-label="Switch game type">Classic</button>
       <button id="mode-toggle" class="icon-btn" title="Switch Daily / Unlimited" aria-label="Switch mode">⇄</button>
       <button id="new-game-btn" class="icon-btn" title="New puzzle" aria-label="New puzzle">↻</button>
+      <button id="hints-toggle" class="icon-btn" title="Toggle higher/lower hints" aria-label="Toggle hints">↕</button>
       <button id="colorblind-btn" class="icon-btn" title="Colorblind mode" aria-label="Colorblind mode">◐</button>
       <button id="stats-btn" class="icon-btn" title="Statistics" aria-label="Statistics">📊</button>
       <button id="help-btn" class="icon-btn" title="How to play" aria-label="Help">?</button>
@@ -61,6 +63,7 @@
         <button class="key op-key" data-key="−">−</button>
         <button class="key op-key" data-key="×">×</button>
         <button class="key op-key" data-key="÷">÷</button>
+        <button class="key op-key key-eq" data-key="=" title="Move to the result">=</button>
       </div>
       <div class="key-row">
         <button class="key wide" data-key="del">⌫ Delete</button>
@@ -89,6 +92,16 @@
        which way the hidden number's <em>full value</em> lies (not its digits).</p>
     <p>The <strong>Remaining possibilities</strong> meter shows how many equations
        still fit everything you've learned. You have <strong>6 guesses</strong>.</p>
+
+    <h3>Two modes</h3>
+    <p><strong>Classic</strong> — the result is shown; find the two 3-digit numbers
+       and operator that make it.</p>
+    <p><strong>Equation</strong> — nothing is shown. Guess a whole equation: two
+       1–2 digit numbers, an operator, and the answer (type the operands, press
+       <strong>=</strong>, then the result). Your guess must actually balance.
+       Empty leading cells are <strong>blanks</strong> — a green blank means that
+       number is shorter than its box. Use <strong>↕</strong> to turn the
+       Higher/Lower hints off for a harder game.</p>
   </div>
 
   <div id="stats-modal" class="modal">
@@ -126,6 +139,7 @@
   <script src="js/guessValidator.js"></script>
   <script src="js/statisticsManager.js"></script>
   <script src="js/dailyPuzzle.js"></script>
+  <script src="js/equationMode.js"></script>
   <script src="js/uiRenderer.js"></script>
   <script src="js/main.js"></script>
 </body>

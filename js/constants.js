@@ -38,3 +38,18 @@ function isRepdigit(n) {
 function digits3(n) {
   return String(n).padStart(3, '0').split('');
 }
+
+// The "blank" token used by Equation mode to left-pad a number into a
+// fixed-width field. It is a first-class symbol: it gets Wordle-graded like a
+// digit, so a green blank tells you a leading position is empty (the number is
+// shorter than the field).
+const BLANK = '·';
+
+// Left-pad a number into `width` cells using BLANK, e.g. 7 -> ['·','7'] and
+// 1 over width 4 -> ['·','·','·','1'].
+function padCells(n, width) {
+  const s = String(n);
+  const out = new Array(width).fill(BLANK);
+  for (let i = 0; i < s.length; i++) out[width - s.length + i] = s[i];
+  return out;
+}

@@ -24,7 +24,17 @@ class UIRenderer {
     this.dom.target.textContent = formatNumber(result);
   }
 
-  renderModeBadge(mode, dailyNumber) {
+  // Toggle body classes that drive mode-specific layout (target visibility, the
+  // "=" key, tile sizing) and reflect the type on the toggle button.
+  applyGameType(type) {
+    const eq = type === 'equation';
+    document.body.classList.toggle('mode-equation', eq);
+    document.body.classList.toggle('mode-classic', !eq);
+    const btn = document.getElementById('type-toggle');
+    if (btn) btn.textContent = eq ? 'Equation' : 'Classic';
+  }
+
+  renderModeBadge(mode, dailyNumber /* gameType shown on the toggle button */) {
     this.dom.modeLabel.textContent = mode === 'daily' ? 'Daily' : 'Unlimited';
     this.dom.puzzleTag.textContent =
       mode === 'daily' && dailyNumber ? `#${dailyNumber}` : '∞';
@@ -75,6 +85,7 @@ class UIRenderer {
 
   // Render the full 6-row board from game state.
   renderBoard(game) {
+    if (game.gameType === 'equation') return this.renderEquationBoard(game);
     const board = this.dom.board;
     board.innerHTML = '';
 
@@ -130,6 +141,98 @@ class UIRenderer {
     return span;
   }
 
+  // ---- Equation board ----------------------------------------------------
+
+  // A static, ungraded "=" separator between the second operand and the result.
+  _eqSeparator() {
+    const t = document.createElement('div');
+    t.className = 'tile sep';
+    t.textContent = '=';
+    return t;
+  }
+
+  // A graded field: cells (with BLANK tokens) + per-cell colour + optional hint.
+  _eqField(cells, states, hint, reveal, showHint) {
+    const wrap = document.createElement('div');
+    wrap.className = 'operand-wrap';
+    const group = document.createElement('div');
+    group.className = 'operand';
+    for (let i = 0; i < cells.length; i++) {
+      const isBlank = cells[i] === BLANK;
+      const tile = this._makeTile(isBlank ? '' : cells[i], states ? states[i] : '', false);
+      if (isBlank) tile.classList.add('blank');
+      if (reveal) {
+        tile.classList.add('reveal');
+        tile.style.animationDelay = `${i * 80}ms`;
+      }
+      group.appendChild(tile);
+    }
+    wrap.appendChild(group);
+    if (hint && showHint) wrap.appendChild(this._hintChip(hint));
+    return wrap;
+  }
+
+  // A live input field: typed digits right-aligned, remaining cells empty. The
+  // active field is outlined so the player can see where input is going.
+  _eqInputField(value, width, active) {
+    const wrap = document.createElement('div');
+    wrap.className = 'operand-wrap';
+    const group = document.createElement('div');
+    group.className = 'operand' + (active ? ' active' : '');
+    const chars = value.split('');
+    const pad = width - chars.length;
+    for (let i = 0; i < width; i++) {
+      const ch = i >= pad ? chars[i - pad] : '';
+      group.appendChild(this._makeTile(ch, ch ? 'filled' : '', false));
+    }
+    wrap.appendChild(group);
+    return wrap;
+  }
+
+  renderEquationBoard(game) {
+    const board = this.dom.board;
+    board.innerHTML = '';
+
+    for (let row = 0; row < game.maxGuesses; row++) {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'row';
+      const eq = document.createElement('div');
+      eq.className = 'row-eq';
+
+      const guess = game.guesses[row];
+      const isCurrent = row === game.guesses.length && game.status === 'playing';
+
+      if (guess) {
+        const justRevealed = row === game.guesses.length - 1 && game.justSubmitted;
+        eq.appendChild(this._eqField(padCells(guess.a, 2), guess.fb.first, guess.fb.firstHint, justRevealed, game.hints));
+        eq.appendChild(this._makeTile(guess.op, guess.fb.operator, true));
+        eq.appendChild(this._eqField(padCells(guess.b, 2), guess.fb.second, guess.fb.secondHint, justRevealed, game.hints));
+        eq.appendChild(this._eqSeparator());
+        eq.appendChild(this._eqField(padCells(guess.c, 4), guess.fb.result, null, justRevealed, false));
+        rowEl.appendChild(eq);
+        if (justRevealed && game.status === 'won') rowEl.classList.add('win-bounce');
+      } else if (isCurrent) {
+        const I = game.eqInput;
+        eq.appendChild(this._eqInputField(I.first, 2, I.phase === 'a'));
+        eq.appendChild(this._makeTile(I.op || '', I.op ? 'filled' : '', true));
+        eq.appendChild(this._eqInputField(I.second, 2, I.phase === 'b'));
+        eq.appendChild(this._eqSeparator());
+        eq.appendChild(this._eqInputField(I.result, 4, I.phase === 'c'));
+        rowEl.appendChild(eq);
+        rowEl.classList.add('current');
+        this._currentRowEl = rowEl;
+      } else {
+        eq.appendChild(this._eqInputField('', 2, false));
+        eq.appendChild(this._makeTile('', '', true));
+        eq.appendChild(this._eqInputField('', 2, false));
+        eq.appendChild(this._eqSeparator());
+        eq.appendChild(this._eqInputField('', 4, false));
+        rowEl.appendChild(eq);
+      }
+      board.appendChild(rowEl);
+    }
+  }
+
   // ---- Entropy meter -----------------------------------------------------
 
   renderEntropy(from, to, initial) {
@@ -163,9 +266,16 @@ class UIRenderer {
     const consider = (key, state) => {
       if ((rank[state] || 0) > (rank[best[key]] || 0)) best[key] = state;
     };
+    const skipBlank = (d, st) => { if (d !== BLANK) consider(d, st); };
     for (const g of game.guesses) {
-      digits3(g.a).forEach((d, i) => consider(d, g.fb.first[i]));
-      digits3(g.b).forEach((d, i) => consider(d, g.fb.second[i]));
+      if (game.gameType === 'equation') {
+        padCells(g.a, 2).forEach((d, i) => skipBlank(d, g.fb.first[i]));
+        padCells(g.b, 2).forEach((d, i) => skipBlank(d, g.fb.second[i]));
+        padCells(g.c, 4).forEach((d, i) => skipBlank(d, g.fb.result[i]));
+      } else {
+        digits3(g.a).forEach((d, i) => consider(d, g.fb.first[i]));
+        digits3(g.b).forEach((d, i) => consider(d, g.fb.second[i]));
+      }
       consider(g.op, g.fb.operator);
     }
     this.dom.keypad.querySelectorAll('button[data-key]').forEach((btn) => {
