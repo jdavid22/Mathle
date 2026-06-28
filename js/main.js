@@ -27,6 +27,7 @@ class Game {
   // ---- Lifecycle ---------------------------------------------------------
 
   newGame(mode) {
+    this.ui.closeModals(); // clear any open modal when starting/switching games
     this.mode = mode;
     this.input = { first: '', op: null, second: '' };
     this.guesses = [];

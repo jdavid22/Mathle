@@ -39,14 +39,22 @@ class UIRenderer {
     return tile;
   }
 
-  _hintArrow(hint) {
-    const span = document.createElement('span');
-    span.className = 'hint ' + hint;
-    span.textContent = hint === 'up' ? '↑' : hint === 'down' ? '↓' : '✓';
-    return span;
+  // A full-width pill that annotates the WHOLE operand's value (not a digit):
+  // "▲ Higher" / "▼ Lower" tells the player which way the hidden number lies.
+  _hintChip(hint) {
+    const chip = document.createElement('div');
+    chip.className = 'hint ' + hint;
+    if (hint === 'equal') {
+      chip.innerHTML = '<span class="hint-ico">✓</span><span class="hint-word">Match</span>';
+    } else {
+      const ico = hint === 'up' ? '▲' : '▼';
+      const word = hint === 'up' ? 'Higher' : 'Lower';
+      chip.innerHTML = `<span class="hint-ico">${ico}</span><span class="hint-word">${word}</span>`;
+    }
+    return chip;
   }
 
-  // Build one operand group (3 tiles + optional hint arrow underneath).
+  // Build one operand group (3 tiles + optional full-width value hint beneath).
   _operandGroup(chars, states, hint, reveal) {
     const wrap = document.createElement('div');
     wrap.className = 'operand-wrap';
@@ -61,7 +69,7 @@ class UIRenderer {
       group.appendChild(tile);
     }
     wrap.appendChild(group);
-    if (hint) wrap.appendChild(this._hintArrow(hint));
+    if (hint) wrap.appendChild(this._hintChip(hint));
     return wrap;
   }
 
@@ -73,6 +81,10 @@ class UIRenderer {
     for (let row = 0; row < game.maxGuesses; row++) {
       const rowEl = document.createElement('div');
       rowEl.className = 'row';
+      // The tiles live on their own line so a row is never wider than 7 tiles;
+      // hints and the result caption stack beneath it (mobile-friendly).
+      const eq = document.createElement('div');
+      eq.className = 'row-eq';
 
       const guess = game.guesses[row];
       const isCurrent = row === game.guesses.length && game.status === 'playing';
@@ -80,31 +92,32 @@ class UIRenderer {
       if (guess) {
         // Completed, graded guess.
         const justRevealed = row === game.guesses.length - 1 && game.justSubmitted;
-        rowEl.appendChild(
+        eq.appendChild(
           this._operandGroup(digits3(guess.a), guess.fb.first, guess.fb.firstHint, justRevealed)
         );
-        rowEl.appendChild(this._makeTile(guess.op, guess.fb.operator, true));
-        rowEl.appendChild(
+        eq.appendChild(this._makeTile(guess.op, guess.fb.operator, true));
+        eq.appendChild(
           this._operandGroup(digits3(guess.b), guess.fb.second, guess.fb.secondHint, justRevealed)
         );
+        rowEl.appendChild(eq);
         rowEl.appendChild(this._resultLabel(guess.result, game.puzzle.result));
         if (justRevealed && game.status === 'won') rowEl.classList.add('win-bounce');
       } else if (isCurrent) {
         // Live input row.
         const first = game.input.first.split('');
         const second = game.input.second.split('');
-        rowEl.appendChild(this._operandGroup(first, null, null, false));
-        rowEl.appendChild(
-          this._makeTile(game.input.op || '', game.input.op ? 'filled' : '', true)
-        );
-        rowEl.appendChild(this._operandGroup(second, null, null, false));
+        eq.appendChild(this._operandGroup(first, null, null, false));
+        eq.appendChild(this._makeTile(game.input.op || '', game.input.op ? 'filled' : '', true));
+        eq.appendChild(this._operandGroup(second, null, null, false));
+        rowEl.appendChild(eq);
         rowEl.classList.add('current');
         this._currentRowEl = rowEl;
       } else {
         // Empty future row.
-        rowEl.appendChild(this._operandGroup([], null, null, false));
-        rowEl.appendChild(this._makeTile('', '', true));
-        rowEl.appendChild(this._operandGroup([], null, null, false));
+        eq.appendChild(this._operandGroup([], null, null, false));
+        eq.appendChild(this._makeTile('', '', true));
+        eq.appendChild(this._operandGroup([], null, null, false));
+        rowEl.appendChild(eq);
       }
       board.appendChild(rowEl);
     }

@@ -122,10 +122,16 @@ body {
 .board {
   display: flex;
   flex-direction: column;
-  gap: var(--gap);
+  gap: 10px;
   align-items: center;
 }
 .row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.row-eq {
   display: flex;
   align-items: flex-start;
   gap: var(--gap);
@@ -134,8 +140,8 @@ body {
 .operand-wrap {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
+  align-items: stretch; /* hint pill stretches to the full operand width */
+  gap: 4px;
 }
 .operand { display: flex; gap: var(--gap); }
 
@@ -166,20 +172,31 @@ body {
 .tile.present { background: var(--present); border-color: var(--present); color: #fff; }
 .tile.absent  { background: var(--absent);  border-color: var(--absent);  color: var(--text); }
 
+/* Value hint pill — annotates the whole operand, deliberately styled unlike a
+   digit tile (outlined pill, full operand width) so it can't be mistaken for
+   per-digit feedback. */
 .hint {
-  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.62rem;
   font-weight: 800;
-  line-height: 1;
-  height: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 4px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--tile-border);
+  white-space: nowrap;
 }
-.hint.up { color: #ff6b6b; }
-.hint.down { color: #4ea1ff; }
-.hint.equal { color: var(--correct); }
+.hint .hint-ico { font-size: 0.6rem; line-height: 1; }
+.hint.up   { color: #6ea8ff; border-color: #324a73; }
+.hint.down { color: #ff9db1; border-color: #6e3a48; }
+.hint.equal { color: var(--correct); border-color: #2f5a43; }
 
 .eq-result {
-  align-self: center;
-  margin-left: 4px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -415,4 +432,35 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .tile.reveal, .row.shake, .row.win-bounce .tile { animation: none; }
+}
+
+/* ---- Mobile ---- */
+.keypad { padding-bottom: env(safe-area-inset-bottom, 0); }
+
+@media (max-width: 520px) {
+  :root {
+    --tile-size: clamp(34px, 12.6vw, 50px);
+    --gap: 5px;
+  }
+  .game { padding: 10px 10px 8px; gap: 12px; }
+  .topbar { padding: 9px 10px; }
+  .brand h1 { font-size: 1.2rem; }
+  .top-actions { gap: 2px; }
+  .icon-btn { width: 33px; height: 33px; font-size: 1rem; }
+  .target-value { font-size: clamp(1.9rem, 11vw, 2.6rem); }
+  .board { gap: 8px; }
+  .entropy { padding: 10px 12px; }
+  .entropy-value { font-size: 1.2rem; }
+  .key { height: 46px; font-size: 1.02rem; }
+  .key.wide { font-size: 0.88rem; }
+  .keypad { gap: 6px; }
+  .key-row { gap: 5px; }
+  .hint { font-size: 0.56rem; letter-spacing: 0.3px; padding: 2px 3px; }
+}
+
+/* Very narrow phones: keep all 7 tiles on one line. */
+@media (max-width: 360px) {
+  :root { --tile-size: clamp(30px, 12vw, 42px); --gap: 4px; }
+  .hint .hint-word { display: none; } /* arrow alone once space is tight */
+  .hint { font-size: 0.7rem; }
 }
