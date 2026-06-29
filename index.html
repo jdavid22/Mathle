@@ -17,7 +17,6 @@
       </span>
     </div>
     <div class="top-actions">
-      <button id="type-toggle" class="text-btn" title="Switch Classic / Equation mode" aria-label="Switch game type">Classic</button>
       <button id="mode-toggle" class="icon-btn" title="Switch Daily / Unlimited" aria-label="Switch mode">⇄</button>
       <button id="new-game-btn" class="icon-btn" title="New puzzle" aria-label="New puzzle">↻</button>
       <button id="colorblind-btn" class="icon-btn" title="Colorblind mode" aria-label="Colorblind mode">◐</button>
@@ -27,11 +26,6 @@
   </header>
 
   <main class="game">
-    <section class="target">
-      <div class="target-label">Target result</div>
-      <div id="target-result" class="target-value">—</div>
-    </section>
-
     <section id="board" class="board" aria-label="Guesses"></section>
 
     <section class="entropy" aria-label="Remaining possibilities">
@@ -76,46 +70,23 @@
 
   <div id="help-modal" class="modal">
     <button class="modal-close" data-close aria-label="Close">×</button>
-
-    <!-- Equation mode help (the default) -->
-    <div class="help-equation">
-      <h2>How to play · Equation</h2>
-      <p>Nothing is shown. Deduce the whole hidden equation. Guess two numbers
-         (1–99), an operator, and the answer: type the first number, an
-         <strong>operator</strong>, the second number, press <strong>=</strong>,
-         then the answer, then <strong>Enter</strong>. Your guess must be a true
-         equation that balances.</p>
-      <ul class="legend">
-        <li><span class="swatch correct"></span> Right symbol, right spot</li>
-        <li><span class="swatch present"></span> Symbol is in that field, wrong spot</li>
-        <li><span class="swatch absent"></span> Symbol not in that field</li>
-      </ul>
-      <p>Numbers sit in fixed boxes. Empty leading cells are <strong>blanks</strong>,
-         and blanks are graded too, so a <strong>green blank</strong> means that
-         number is shorter than its box. Pills under each number show
-         <strong>▲ Higher</strong> / <strong>▼ Lower</strong> by full value.</p>
-      <p>The <strong>Remaining possibilities</strong> meter narrows as you deduce.
-         You have <strong>6 guesses</strong>.</p>
-    </div>
-
-    <!-- Classic mode help -->
-    <div class="help-classic">
-      <h2>How to play · Classic</h2>
-      <p>Find the hidden equation that produces the <strong>target result</strong>.
-         Guess a <strong>three-digit number</strong>, an <strong>operator</strong>
-         (+ − × ÷), and another <strong>three-digit number</strong>. The result is
-         computed for you.</p>
-      <ul class="legend">
-        <li><span class="swatch correct"></span> Right digit, right spot</li>
-        <li><span class="swatch present"></span> Digit is in that number, wrong spot</li>
-        <li><span class="swatch absent"></span> Digit not in that number</li>
-      </ul>
-      <p>The operator tile turns green when it's correct. Beneath each number a pill
-         shows <strong>▲ Higher</strong> or <strong>▼ Lower</strong>, telling you
-         which way the hidden number's <em>full value</em> lies (not its digits).</p>
-      <p>The <strong>Remaining possibilities</strong> meter shows how many equations
-         still fit everything you've learned. You have <strong>6 guesses</strong>.</p>
-    </div>
+    <h2>How to play</h2>
+    <p>Nothing is shown. Deduce the whole hidden equation. Guess two numbers
+       (1–99), an operator, and the answer: type the first number, an
+       <strong>operator</strong>, the second number, press <strong>=</strong>,
+       then the answer, then <strong>Enter</strong>. Your guess must be a true
+       equation that balances.</p>
+    <ul class="legend">
+      <li><span class="swatch correct"></span> Right symbol, right spot</li>
+      <li><span class="swatch present"></span> Symbol is in that field, wrong spot</li>
+      <li><span class="swatch absent"></span> Symbol not in that field</li>
+    </ul>
+    <p>Numbers sit in fixed boxes. Empty leading cells are <strong>blanks</strong>,
+       and blanks are graded too, so a <strong>green blank</strong> means that
+       number is shorter than its box. Pills under each number show
+       <strong>▲ Higher</strong> / <strong>▼ Lower</strong> by full value.</p>
+    <p>The <strong>Remaining possibilities</strong> meter narrows as you deduce.
+       You have <strong>6 guesses</strong>.</p>
   </div>
 
   <div id="stats-modal" class="modal">
@@ -148,10 +119,6 @@
   <!-- Modules, loaded in dependency order (classic scripts share globals). -->
   <script src="js/constants.js"></script>
   <script src="js/rng.js"></script>
-  <script src="js/feedbackEngine.js"></script>
-  <script src="js/entropyCalculator.js"></script>
-  <script src="js/puzzleGenerator.js"></script>
-  <script src="js/guessValidator.js"></script>
   <script src="js/statisticsManager.js"></script>
   <script src="js/dailyPuzzle.js"></script>
   <script src="js/equationMode.js"></script>

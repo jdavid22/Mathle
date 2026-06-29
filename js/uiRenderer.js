@@ -8,7 +8,6 @@
 class UIRenderer {
   constructor() {
     this.dom = {
-      target: document.getElementById('target-result'),
       board: document.getElementById('board'),
       entropyValue: document.getElementById('entropy-value'),
       entropyBar: document.getElementById('entropy-bar'),
@@ -20,21 +19,7 @@ class UIRenderer {
     this._entropyAnim = null;
   }
 
-  renderTarget(result) {
-    this.dom.target.textContent = formatNumber(result);
-  }
-
-  // Toggle body classes that drive mode-specific layout (target visibility, the
-  // "=" key, tile sizing) and reflect the type on the toggle button.
-  applyGameType(type) {
-    const eq = type === 'equation';
-    document.body.classList.toggle('mode-equation', eq);
-    document.body.classList.toggle('mode-classic', !eq);
-    const btn = document.getElementById('type-toggle');
-    if (btn) btn.textContent = eq ? 'Equation' : 'Classic';
-  }
-
-  renderModeBadge(mode, dailyNumber /* gameType shown on the toggle button */) {
+  renderModeBadge(mode, dailyNumber) {
     this.dom.modeLabel.textContent = mode === 'daily' ? 'Daily' : 'Unlimited';
     this.dom.puzzleTag.textContent =
       mode === 'daily' && dailyNumber ? `#${dailyNumber}` : '∞';
@@ -64,22 +49,49 @@ class UIRenderer {
     return chip;
   }
 
-  // Build one operand group (3 tiles + optional full-width value hint beneath).
-  _operandGroup(chars, states, hint, reveal) {
+  // A static, ungraded "=" separator between the second operand and the result.
+  _separator() {
+    const t = document.createElement('div');
+    t.className = 'tile sep';
+    t.textContent = '=';
+    return t;
+  }
+
+  // A graded field: cells (with BLANK tokens) + per-cell colour + optional hint.
+  _field(cells, states, hint, reveal) {
     const wrap = document.createElement('div');
     wrap.className = 'operand-wrap';
     const group = document.createElement('div');
     group.className = 'operand';
-    for (let i = 0; i < 3; i++) {
-      const tile = this._makeTile(chars[i] ?? '', states ? states[i] : (chars[i] ? 'filled' : ''), false);
+    for (let i = 0; i < cells.length; i++) {
+      const isBlank = cells[i] === BLANK;
+      const tile = this._makeTile(isBlank ? '' : cells[i], states ? states[i] : '', false);
+      if (isBlank) tile.classList.add('blank');
       if (reveal) {
         tile.classList.add('reveal');
-        tile.style.animationDelay = `${i * 90}ms`;
+        tile.style.animationDelay = `${i * 80}ms`;
       }
       group.appendChild(tile);
     }
     wrap.appendChild(group);
     if (hint) wrap.appendChild(this._hintChip(hint));
+    return wrap;
+  }
+
+  // A live input field: typed digits right-aligned, remaining cells empty. The
+  // active field is outlined so the player can see where input is going.
+  _inputField(value, width, active) {
+    const wrap = document.createElement('div');
+    wrap.className = 'operand-wrap';
+    const group = document.createElement('div');
+    group.className = 'operand' + (active ? ' active' : '');
+    const chars = value.split('');
+    const pad = width - chars.length;
+    for (let i = 0; i < width; i++) {
+      const ch = i >= pad ? chars[i - pad] : '';
+      group.appendChild(this._makeTile(ch, ch ? 'filled' : '', false));
+    }
+    wrap.appendChild(group);
     return wrap;
   }
 
@@ -103,114 +115,8 @@ class UIRenderer {
     rows.style.transform = scale < 1 ? `scale(${scale})` : '';
   }
 
-  // Render the full 6-row board from game state.
+  // Render the full 6-row board: [a a][op][b b][=][c c c c] per row.
   renderBoard(game) {
-    if (game.gameType === 'equation') return this.renderEquationBoard(game);
-    const board = document.createElement('div');
-    board.className = 'board-rows';
-
-    for (let row = 0; row < game.maxGuesses; row++) {
-      const rowEl = document.createElement('div');
-      rowEl.className = 'row';
-      // The tiles live on their own line so a row is never wider than 7 tiles;
-      // hints and the result caption stack beneath it (mobile-friendly).
-      const eq = document.createElement('div');
-      eq.className = 'row-eq';
-
-      const guess = game.guesses[row];
-      const isCurrent = row === game.guesses.length && game.status === 'playing';
-
-      if (guess) {
-        // Completed, graded guess.
-        const justRevealed = row === game.guesses.length - 1 && game.justSubmitted;
-        eq.appendChild(
-          this._operandGroup(digits3(guess.a), guess.fb.first, guess.fb.firstHint, justRevealed)
-        );
-        eq.appendChild(this._makeTile(guess.op, guess.fb.operator, true));
-        eq.appendChild(
-          this._operandGroup(digits3(guess.b), guess.fb.second, guess.fb.secondHint, justRevealed)
-        );
-        rowEl.appendChild(eq);
-        rowEl.appendChild(this._resultLabel(guess.result, game.puzzle.result));
-        if (justRevealed && game.status === 'won') rowEl.classList.add('win-bounce');
-      } else if (isCurrent) {
-        // Live input row.
-        const first = game.input.first.split('');
-        const second = game.input.second.split('');
-        eq.appendChild(this._operandGroup(first, null, null, false));
-        eq.appendChild(this._makeTile(game.input.op || '', game.input.op ? 'filled' : '', true));
-        eq.appendChild(this._operandGroup(second, null, null, false));
-        rowEl.appendChild(eq);
-        rowEl.classList.add('current');
-        this._currentRowEl = rowEl;
-      } else {
-        // Empty future row.
-        eq.appendChild(this._operandGroup([], null, null, false));
-        eq.appendChild(this._makeTile('', '', true));
-        eq.appendChild(this._operandGroup([], null, null, false));
-        rowEl.appendChild(eq);
-      }
-      board.appendChild(rowEl);
-    }
-    this._mountRows(board);
-  }
-
-  _resultLabel(result, target) {
-    const span = document.createElement('div');
-    span.className = 'eq-result' + (result === target ? ' match' : '');
-    span.textContent = '= ' + formatNumber(result);
-    return span;
-  }
-
-  // ---- Equation board ----------------------------------------------------
-
-  // A static, ungraded "=" separator between the second operand and the result.
-  _eqSeparator() {
-    const t = document.createElement('div');
-    t.className = 'tile sep';
-    t.textContent = '=';
-    return t;
-  }
-
-  // A graded field: cells (with BLANK tokens) + per-cell colour + optional hint.
-  _eqField(cells, states, hint, reveal, showHint) {
-    const wrap = document.createElement('div');
-    wrap.className = 'operand-wrap';
-    const group = document.createElement('div');
-    group.className = 'operand';
-    for (let i = 0; i < cells.length; i++) {
-      const isBlank = cells[i] === BLANK;
-      const tile = this._makeTile(isBlank ? '' : cells[i], states ? states[i] : '', false);
-      if (isBlank) tile.classList.add('blank');
-      if (reveal) {
-        tile.classList.add('reveal');
-        tile.style.animationDelay = `${i * 80}ms`;
-      }
-      group.appendChild(tile);
-    }
-    wrap.appendChild(group);
-    if (hint && showHint) wrap.appendChild(this._hintChip(hint));
-    return wrap;
-  }
-
-  // A live input field: typed digits right-aligned, remaining cells empty. The
-  // active field is outlined so the player can see where input is going.
-  _eqInputField(value, width, active) {
-    const wrap = document.createElement('div');
-    wrap.className = 'operand-wrap';
-    const group = document.createElement('div');
-    group.className = 'operand' + (active ? ' active' : '');
-    const chars = value.split('');
-    const pad = width - chars.length;
-    for (let i = 0; i < width; i++) {
-      const ch = i >= pad ? chars[i - pad] : '';
-      group.appendChild(this._makeTile(ch, ch ? 'filled' : '', false));
-    }
-    wrap.appendChild(group);
-    return wrap;
-  }
-
-  renderEquationBoard(game) {
     const board = document.createElement('div');
     board.className = 'board-rows';
 
@@ -225,29 +131,29 @@ class UIRenderer {
 
       if (guess) {
         const justRevealed = row === game.guesses.length - 1 && game.justSubmitted;
-        eq.appendChild(this._eqField(padCells(guess.a, 2), guess.fb.first, guess.fb.firstHint, justRevealed, game.hints));
+        eq.appendChild(this._field(padCells(guess.a, 2), guess.fb.first, guess.fb.firstHint, justRevealed));
         eq.appendChild(this._makeTile(guess.op, guess.fb.operator, true));
-        eq.appendChild(this._eqField(padCells(guess.b, 2), guess.fb.second, guess.fb.secondHint, justRevealed, game.hints));
-        eq.appendChild(this._eqSeparator());
-        eq.appendChild(this._eqField(padCells(guess.c, 4), guess.fb.result, null, justRevealed, false));
+        eq.appendChild(this._field(padCells(guess.b, 2), guess.fb.second, guess.fb.secondHint, justRevealed));
+        eq.appendChild(this._separator());
+        eq.appendChild(this._field(padCells(guess.c, 4), guess.fb.result, null, justRevealed));
         rowEl.appendChild(eq);
         if (justRevealed && game.status === 'won') rowEl.classList.add('win-bounce');
       } else if (isCurrent) {
-        const I = game.eqInput;
-        eq.appendChild(this._eqInputField(I.first, 2, I.phase === 'a'));
+        const I = game.input;
+        eq.appendChild(this._inputField(I.first, 2, I.phase === 'a'));
         eq.appendChild(this._makeTile(I.op || '', I.op ? 'filled' : '', true));
-        eq.appendChild(this._eqInputField(I.second, 2, I.phase === 'b'));
-        eq.appendChild(this._eqSeparator());
-        eq.appendChild(this._eqInputField(I.result, 4, I.phase === 'c'));
+        eq.appendChild(this._inputField(I.second, 2, I.phase === 'b'));
+        eq.appendChild(this._separator());
+        eq.appendChild(this._inputField(I.result, 4, I.phase === 'c'));
         rowEl.appendChild(eq);
         rowEl.classList.add('current');
         this._currentRowEl = rowEl;
       } else {
-        eq.appendChild(this._eqInputField('', 2, false));
+        eq.appendChild(this._inputField('', 2, false));
         eq.appendChild(this._makeTile('', '', true));
-        eq.appendChild(this._eqInputField('', 2, false));
-        eq.appendChild(this._eqSeparator());
-        eq.appendChild(this._eqInputField('', 4, false));
+        eq.appendChild(this._inputField('', 2, false));
+        eq.appendChild(this._separator());
+        eq.appendChild(this._inputField('', 4, false));
         rowEl.appendChild(eq);
       }
       board.appendChild(rowEl);
@@ -292,7 +198,6 @@ class UIRenderer {
   // in the answer. Instead we judge membership against the whole hidden answer,
   // and only colour digits the player has actually tried.
   updateKeyboard(game) {
-    const eq = game.gameType === 'equation';
     const guessed = new Set(); // digits the player has entered
     const greens = new Set();  // digits placed correctly in some field
     const opState = {};        // operator key -> 'correct' | 'absent'
@@ -305,25 +210,18 @@ class UIRenderer {
       });
     };
     for (const g of game.guesses) {
-      if (eq) {
-        scan(padCells(g.a, 2), g.fb.first);
-        scan(padCells(g.b, 2), g.fb.second);
-        scan(padCells(g.c, 4), g.fb.result);
-      } else {
-        scan(digits3(g.a), g.fb.first);
-        scan(digits3(g.b), g.fb.second);
-      }
+      scan(padCells(g.a, 2), g.fb.first);
+      scan(padCells(g.b, 2), g.fb.second);
+      scan(padCells(g.c, 4), g.fb.result);
       if (g.fb.operator === 'correct') opState[g.op] = 'correct';
       else if (!opState[g.op]) opState[g.op] = 'absent';
     }
 
-    // Every digit that appears anywhere in the hidden answer. (Classic's result
-    // is shown, not part of the hidden answer, so only its operands count.)
-    const nums = eq
-      ? [game.puzzle.a, game.puzzle.b, game.puzzle.c]
-      : [game.puzzle.a, game.puzzle.b];
+    // Every digit that appears anywhere in the hidden answer.
     const answerDigits = new Set();
-    for (const n of nums) for (const ch of String(n)) answerDigits.add(ch);
+    for (const n of [game.puzzle.a, game.puzzle.b, game.puzzle.c]) {
+      for (const ch of String(n)) answerDigits.add(ch);
+    }
 
     this.dom.keypad.querySelectorAll('button[data-key]').forEach((btn) => {
       const key = btn.dataset.key;

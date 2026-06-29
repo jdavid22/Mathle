@@ -18,8 +18,9 @@
   --absent: #3a4150;
 
   --radius: 12px;
-  --gap: 6px;
-  --tile-size: clamp(38px, 11.5vw, 56px);
+  --gap: 4px;
+  /* 10 cells per row (2 + op + 2 + = + 4), so tiles are sized accordingly. */
+  --tile-size: clamp(28px, 7.6vw, 40px);
 }
 
 /* Colorblind palette: blue / orange (high-contrast, Wordle-style) */
@@ -106,21 +107,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-/* ---- Target ---- */
-.target { text-align: center; }
-.target-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--muted);
-}
-.target-value {
-  font-size: clamp(2.1rem, 9vw, 3rem);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  margin-top: 2px;
 }
 
 /* ---- Board ---- */
@@ -213,14 +199,6 @@ body {
 .hint.up   { color: #6ea8ff; border-color: #324a73; }
 .hint.down { color: #ff9db1; border-color: #6e3a48; }
 .hint.equal { color: var(--correct); border-color: #2f5a43; }
-
-.eq-result {
-  font-size: 0.78rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.eq-result.match { color: var(--correct); font-weight: 700; }
 
 /* ---- Entropy meter ---- */
 .entropy {
@@ -452,38 +430,6 @@ body {
   .tile.reveal, .row.shake, .row.win-bounce .tile { animation: none; }
 }
 
-/* ---- Game-type toggle button ---- */
-.text-btn {
-  background: var(--panel-2);
-  border: 1px solid var(--tile-border);
-  color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 700;
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  align-self: center;
-}
-.text-btn:hover { background: var(--tile); }
-
-/* ---- Equation mode ---- */
-body.mode-equation { --tile-size: clamp(28px, 7.6vw, 40px); --gap: 4px; }
-body.mode-equation .target { display: none; }   /* nothing is given away */
-body.mode-classic .key-eq { display: none; }    /* "=" only used in Equation */
-
-/* Each mode shows only its own help text and stats. */
-body.mode-classic .help-equation { display: none; }
-body.mode-equation .help-classic { display: none; }
-body.mode-classic .stat-extra { display: none; } /* miscalcs are Equation-only */
-.stat-extra {
-  margin-top: 16px;
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-.stat-extra strong { color: var(--text); }
-
 /* Blank padding cell — clearly emptier than an unfilled tile, but still grades. */
 .tile.blank {
   background: #12151c;
@@ -510,24 +456,24 @@ body.mode-classic .stat-extra { display: none; } /* miscalcs are Equation-only *
   box-shadow: 0 0 0 1px var(--accent) inset;
 }
 
+/* "Wrong answers entered" line in the stats modal. */
+.stat-extra {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.stat-extra strong { color: var(--text); }
+
 /* ---- Mobile ---- */
 .keypad { padding-bottom: env(safe-area-inset-bottom, 0); }
 @media (max-width: 520px) {
-  body.mode-equation { --tile-size: clamp(22px, 7vw, 33px); --gap: 3px; }
-  .text-btn { font-size: 0.7rem; height: 28px; padding: 0 8px; }
-}
-
-@media (max-width: 520px) {
-  :root {
-    --tile-size: clamp(34px, 12.6vw, 50px);
-    --gap: 5px;
-  }
+  :root { --tile-size: clamp(22px, 7vw, 33px); --gap: 3px; }
   .game { padding: 10px 10px 8px; gap: 12px; }
   .topbar { padding: 9px 10px; }
   .brand h1 { font-size: 1.2rem; }
   .top-actions { gap: 2px; }
   .icon-btn { width: 33px; height: 33px; font-size: 1rem; }
-  .target-value { font-size: clamp(1.9rem, 11vw, 2.6rem); }
   .board { gap: 8px; }
   .entropy { padding: 10px 12px; }
   .entropy-value { font-size: 1.2rem; }
@@ -538,9 +484,9 @@ body.mode-classic .stat-extra { display: none; } /* miscalcs are Equation-only *
   .hint { font-size: 0.56rem; letter-spacing: 0.3px; padding: 2px 3px; }
 }
 
-/* Very narrow phones: keep all 7 tiles on one line. */
+/* Very narrow phones. */
 @media (max-width: 360px) {
-  :root { --tile-size: clamp(30px, 12vw, 42px); --gap: 4px; }
+  :root { --tile-size: clamp(20px, 6.6vw, 30px); --gap: 3px; }
   .hint .hint-word { display: none; } /* arrow alone once space is tight */
   .hint { font-size: 0.7rem; }
 }
