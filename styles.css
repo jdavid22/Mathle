@@ -465,6 +465,19 @@ body {
 }
 .stat-extra strong { color: var(--text); }
 
+/* Quiet creator credit — help modal only. */
+.credit {
+  display: block;
+  margin-top: 18px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  opacity: 0.6;
+  text-decoration: none;
+}
+.credit:hover { opacity: 0.85; }
+
 /* ---- Mobile ---- */
 .keypad { padding-bottom: env(safe-area-inset-bottom, 0); }
 @media (max-width: 520px) {
