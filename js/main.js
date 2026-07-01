@@ -46,6 +46,7 @@ class Game {
     this.status = 'playing';
     this.justSubmitted = false;
     this._recorded = false;
+    this.gameMiscalcs = 0; // unbalanced guesses this round (not shared)
 
     if (mode === 'daily') {
       const info = this.daily.generateForToday();
@@ -79,6 +80,7 @@ class Game {
       this._applyGuess(g.a, g.op, g.b, evaluateEquation(g.a, g.op, g.b), false);
     }
     this.status = saved.status || this.status;
+    this.gameMiscalcs = saved.miscalcs || 0;
   }
 
   // ---- Input handling ----------------------------------------------------
@@ -135,21 +137,28 @@ class Game {
     const I = this.input;
     const check = this.validator.validate(I.first, I.op, I.second, I.result);
     if (!check.ok) {
-      // Track answers that don't match the player's own operands (e.g. 10×11=119).
-      if (check.reason === 'unbalanced') this.stats.recordMiscalc();
+      // Track answers that don't match the player's own operands (e.g. 10×11=119),
+      // both for this round and lifetime.
+      if (check.reason === 'unbalanced') {
+        this.gameMiscalcs++;
+        this.stats.recordMiscalc();
+        if (this.mode === 'daily') this._saveDaily();
+      }
       this.ui.showToast(check.message);
       this.ui.shakeCurrentRow();
       return;
     }
     this.input = { first: '', op: null, second: '', result: '', phase: 'a' };
     this._applyGuess(check.a, check.op, check.b, check.c, true);
+    if (this.mode === 'daily') this._saveDaily();
+  }
 
-    if (this.mode === 'daily') {
-      this.daily.saveProgress(this.dailyDate, {
-        guesses: this.guesses.map((g) => ({ a: g.a, op: g.op, b: g.b })),
-        status: this.status,
-      });
-    }
+  _saveDaily() {
+    this.daily.saveProgress(this.dailyDate, {
+      guesses: this.guesses.map((g) => ({ a: g.a, op: g.op, b: g.b })),
+      status: this.status,
+      miscalcs: this.gameMiscalcs,
+    });
   }
 
   // Grade a guess, shrink the possibility space, and maybe end the game.
@@ -193,6 +202,7 @@ class Game {
       solution: this.puzzle,
       guessesUsed: this.guesses.length,
       maxGuesses: this.maxGuesses,
+      miscalcs: this.gameMiscalcs,
     });
   }
 

@@ -293,13 +293,15 @@ class UIRenderer {
     });
   }
 
-  showGameOver({ won, solution, guessesUsed, maxGuesses }) {
+  showGameOver({ won, solution, guessesUsed, maxGuesses, miscalcs }) {
     document.getElementById('gameover-title').textContent = won ? 'Solved!' : 'Out of guesses';
     document.getElementById('gameover-sub').textContent = won
       ? `You cracked it in ${guessesUsed}/${maxGuesses}.`
       : 'Better luck next time.';
     document.getElementById('result-equation').textContent =
       `${solution.a} ${solution.op} ${solution.b} = ${formatNumber(solution.result)}`;
+    document.getElementById('gameover-miscalc').textContent =
+      miscalcs === 0 ? 'No miscalculations this round 🎯' : `Miscalculations this round: ${miscalcs}`;
     this.openModal('gameover-modal');
   }
 }

@@ -361,7 +361,13 @@ body {
   background: var(--panel-2);
   border-radius: 10px;
   padding: 14px;
-  margin: 14px 0;
+  margin: 14px 0 10px;
+}
+.gameover-miscalc {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0 0 14px;
 }
 .gameover-actions { display: flex; gap: 10px; }
 .btn {
@@ -464,6 +470,42 @@ body {
   color: var(--muted);
 }
 .stat-extra strong { color: var(--text); }
+
+/* ---- Help examples ---- */
+.help-lead {
+  color: var(--muted);
+  margin: -4px 0 12px;
+  font-size: 0.95rem;
+}
+.modal h3 {
+  font-size: 1rem;
+  margin: 18px 0 10px;
+}
+.ex { margin: 0 0 14px; }
+.ex-row {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+/* Reuse the game's tile look at a compact size for illustrations. */
+.ex-row .tile {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  border-width: 1.5px;
+  border-radius: 4px;
+}
+.ex-row .tile.sep { width: auto; min-width: 8px; }
+/* The higher/lower example reuses the real in-game pills under each number. */
+.ex-row.ex-hints { gap: 18px; align-items: flex-start; }
+.ex-cap {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.c-correct { color: var(--correct); }
+.c-present { color: var(--present); }
 
 /* Quiet creator credit — help modal only. */
 .credit {
