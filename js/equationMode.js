@@ -1,15 +1,14 @@
 /**
  * Equation mode (Nerdle-style).
  *
- * The whole equation is hidden: two 2-digit operands, an operator, and a
- * 4-digit result — all guessed. Guesses must be true equations ("equal out").
- * Numbers are shown in fixed-width fields left-padded with the BLANK token, and
- * BLANK is graded like any other symbol (a green blank = "this number is
- * shorter than the field").
+ * The whole equation is hidden: two 1–2 digit operands, an operator, and a
+ * result — all guessed. Guesses must be true equations ("equal out"). Numbers
+ * sit in fixed-width fields left-padded with the BLANK token, and BLANK is
+ * graded like any other symbol (a green blank = "this number is shorter than
+ * the field").
  *
- * This file bundles the four mode-specific collaborators so Equation mode can be
- * swapped in alongside Classic without disturbing it:
- *   EquationFeedback   — field-aware Wordle grading + signatures
+ * Four collaborators:
+ *   EquationFeedback   — field-aware Wordle grading + a comparable signature
  *   EquationEngine     — the ~25k valid-equation universe + consistency filter
  *   EquationGenerator  — picks a non-trivial hidden equation
  *   EquationValidator  — validates a typed guess and that it balances
@@ -65,19 +64,13 @@ class EquationFeedback {
     };
   }
 
-  _cells(fb) {
+  // A compact, comparable string of the whole feedback: two candidates are
+  // consistent iff a guess grades to the same signature against both.
+  signature(fb) {
     const f = fb.first.map((s) => s[0]).join('');
     const s = fb.second.map((s) => s[0]).join('');
     const r = fb.result.map((s) => s[0]).join('');
-    return `${f}|${fb.operator[0]}|${s}|${r}`;
-  }
-
-  signature(fb) {
-    return `${this._cells(fb)}|${fb.firstHint[0]}${fb.secondHint[0]}`;
-  }
-
-  signatureNoHints(fb) {
-    return this._cells(fb);
+    return `${f}|${fb.operator[0]}|${s}|${r}|${fb.firstHint[0]}${fb.secondHint[0]}`;
   }
 
   isWin(fb) {
@@ -115,12 +108,11 @@ class EquationEngine {
     return U;
   }
 
-  filter(candidates, guess, observedSignature, useHints = true) {
-    return candidates.filter((cand) => {
-      const fb = this.fb.grade(guess, cand);
-      const sig = useHints ? this.fb.signature(fb) : this.fb.signatureNoHints(fb);
-      return sig === observedSignature;
-    });
+  // Keep only candidates that would have produced the same feedback signature.
+  filter(candidates, guess, observedSignature) {
+    return candidates.filter(
+      (cand) => this.fb.signature(this.fb.grade(guess, cand)) === observedSignature
+    );
   }
 }
 

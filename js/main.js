@@ -62,7 +62,6 @@ class Game {
     // feedback accumulates.
     this.candidates = this.engine.universe().slice();
     this.initialCount = this.candidates.length;
-    this.prevCount = this.candidates.length;
 
     this.ui.renderModeBadge(this.mode, this.dailyNumber);
     if (mode === 'daily') this._restoreDailyProgress();
@@ -169,7 +168,7 @@ class Game {
     this.guesses.push({ a, op, b, c, fb });
 
     const before = this.candidates.length;
-    this.candidates = this.engine.filter(this.candidates, guess, this.feedback.signature(fb), true);
+    this.candidates = this.engine.filter(this.candidates, guess, this.feedback.signature(fb));
 
     this.justSubmitted = animate;
     if (this.feedback.isWin(fb)) this.status = 'won';
@@ -183,7 +182,6 @@ class Game {
         setTimeout(() => this._showEndState(), 1100); // let the reveal play first
       }
     }
-    this.prevCount = this.candidates.length;
     this.justSubmitted = false;
   }
 

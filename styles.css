@@ -315,18 +315,6 @@ body {
   line-height: 1;
 }
 
-.legend { list-style: none; padding: 0; }
-.legend li { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
-.swatch {
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
-  display: inline-block;
-}
-.swatch.correct { background: var(--correct); }
-.swatch.present { background: var(--present); }
-.swatch.absent  { background: var(--absent); }
-
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -444,7 +432,9 @@ body {
 }
 .tile.blank.correct { background: var(--correct); border-color: var(--correct); border-style: solid; }
 .tile.blank.present { background: var(--present); border-color: var(--present); border-style: solid; }
-.tile.blank.absent  { background: #14171f; border-color: var(--tile-border); border-style: solid; }
+/* An absent blank means "not blank here — a digit belongs in this slot", so it
+   reads as a solid grey tile (like any absent digit), not an empty outline. */
+.tile.blank.absent  { background: var(--absent); border-color: var(--absent); border-style: solid; }
 
 /* Static "=" separator between the second operand and the result. */
 .tile.sep {
@@ -519,6 +509,13 @@ body {
   text-decoration: none;
 }
 .credit:hover { opacity: 0.85; }
+.credit-thanks {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--muted);
+  opacity: 0.55;
+  margin: 6px 0 0;
+}
 
 /* ---- Mobile ---- */
 .keypad { padding-bottom: env(safe-area-inset-bottom, 0); }

@@ -22,10 +22,6 @@ class SeededRandom {
   constructor(seed) {
     this._next = mulberry32(seed);
   }
-  // Float in [0, 1).
-  float() {
-    return this._next();
-  }
   // Integer in [min, max] inclusive.
   int(min, max) {
     return Math.floor(this._next() * (max - min + 1)) + min;
@@ -37,9 +33,6 @@ class SeededRandom {
 }
 
 class LiveRandom {
-  float() {
-    return Math.random();
-  }
   int(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
