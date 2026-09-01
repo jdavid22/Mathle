@@ -452,6 +452,27 @@ body {
   box-shadow: 0 0 0 1px var(--accent) inset;
 }
 
+/* Small cue under a one-digit second operand: press "=" to reach the answer. */
+.field-hint {
+  margin-top: 3px;
+  text-align: center;
+  font-size: 0.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--accent);
+  animation: fieldHintPulse 1.4s ease-in-out infinite;
+}
+@keyframes fieldHintPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .field-hint { animation: none; opacity: 0.85; }
+}
+
 /* "Wrong answers entered" line in the stats modal. */
 .stat-extra {
   margin-top: 16px;
@@ -509,12 +530,24 @@ body {
   text-decoration: none;
 }
 .credit:hover { opacity: 0.85; }
-.credit-thanks {
-  text-align: center;
-  font-size: 0.72rem;
+
+/* "Don't show automatically" toggle in the help modal. */
+.help-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 16px;
+  font-size: 0.8rem;
   color: var(--muted);
-  opacity: 0.55;
-  margin: 6px 0 0;
+  cursor: pointer;
+  user-select: none;
+}
+.help-dismiss input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
 /* ---- Mobile ---- */
@@ -541,4 +574,67 @@ body {
   :root { --tile-size: clamp(20px, 6.6vw, 30px); --gap: 3px; }
   .hint .hint-word { display: none; } /* arrow alone once space is tight */
   .hint { font-size: 0.7rem; }
+}
+
+/* ============================================================
+   Halloween theme (Oct 26–31, or ?theme=halloween)
+   Everything gates behind body.halloween so the base game is untouched.
+   Feedback colours stay legible: correct is still green; only "present"
+   shifts yellow -> orange, and the accent goes pumpkin/purple.
+   ============================================================ */
+body.halloween {
+  --bg: #0c0a12;
+  --panel: #16101f;
+  --panel-2: #1f1730;
+  --tile: #241a33;
+  --tile-border: #3a2b4f;
+  --absent: #39304a;
+  --accent: #ff7518;   /* pumpkin */
+  --accent-2: #e0631a;
+  --present: #f5911e;  /* orange "present" */
+  background: radial-gradient(120% 80% at 50% -10%, #241238 0%, var(--bg) 55%);
+}
+
+/* Glowing title with a little pumpkin. */
+body.halloween .brand h1 {
+  text-shadow: 0 0 10px rgba(255, 117, 24, 0.45), 0 0 22px rgba(139, 92, 246, 0.28);
+}
+body.halloween .brand h1::after { content: ' 🎃'; }
+
+/* Operator keys pick up a purple tint. */
+body.halloween .key.op-key { background: #2a1e3d; color: var(--accent); }
+
+/* Faint cobwebs in the top corners (fixed => out of flow, no layout impact). */
+body.halloween::before,
+body.halloween::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  width: 84px;
+  height: 84px;
+  z-index: 6;
+  opacity: 0.14;
+  pointer-events: none;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='%23ffffff' stroke-width='1.4'><path d='M2 2L100 2M2 2L2 100M2 2L74 74M2 2L100 44M2 2L44 100'/><path d='M24 2Q16 16 2 24M46 2Q30 30 2 46M68 2Q44 44 2 68M90 2Q58 58 2 90'/></g></svg>");
+}
+body.halloween::before { left: 0; }
+body.halloween::after  { right: 0; transform: scaleX(-1); }
+
+/* The "boo" ghost that floats up from a pressed number key. */
+.boo {
+  position: fixed;
+  z-index: 60;
+  font-size: 26px;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+  animation: booRise 0.85s ease-out forwards;
+}
+@keyframes booRise {
+  0%   { transform: translate(-50%, 0) scale(0.7); opacity: 0; }
+  20%  { opacity: 0.85; }
+  100% { transform: translate(calc(-50% + var(--drift, 0px)), -72px) scale(1.1); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boo { display: none; }
 }

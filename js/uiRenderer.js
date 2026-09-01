@@ -79,8 +79,9 @@ class UIRenderer {
   }
 
   // A live input field: typed digits right-aligned, remaining cells empty. The
-  // active field is outlined so the player can see where input is going.
-  _inputField(value, width, active) {
+  // active field is outlined so the player can see where input is going. An
+  // optional `prompt` shows a small cue beneath the field.
+  _inputField(value, width, active, prompt) {
     const wrap = document.createElement('div');
     wrap.className = 'operand-wrap';
     const group = document.createElement('div');
@@ -92,6 +93,12 @@ class UIRenderer {
       group.appendChild(this._makeTile(ch, ch ? 'filled' : '', false));
     }
     wrap.appendChild(group);
+    if (prompt) {
+      const hint = document.createElement('div');
+      hint.className = 'field-hint';
+      hint.textContent = prompt;
+      wrap.appendChild(hint);
+    }
     return wrap;
   }
 
@@ -140,9 +147,11 @@ class UIRenderer {
         if (justRevealed && game.status === 'won') rowEl.classList.add('win-bounce');
       } else if (isCurrent) {
         const I = game.input;
+        // A one-digit second operand won't auto-advance, so nudge toward "=".
+        const secondPrompt = I.phase === 'b' && I.second.length === 1 ? 'press =' : null;
         eq.appendChild(this._inputField(I.first, 2, I.phase === 'a'));
         eq.appendChild(this._makeTile(I.op || '', I.op ? 'filled' : '', true));
-        eq.appendChild(this._inputField(I.second, 2, I.phase === 'b'));
+        eq.appendChild(this._inputField(I.second, 2, I.phase === 'b', secondPrompt));
         eq.appendChild(this._separator());
         eq.appendChild(this._inputField(I.result, 4, I.phase === 'c'));
         rowEl.appendChild(eq);
@@ -245,6 +254,30 @@ class UIRenderer {
     t.classList.add('show');
     clearTimeout(this._toastTimer);
     this._toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+  }
+
+  // Halloween flourish: a small ghost floats up from the pressed number key.
+  // No-op unless the theme is on; respects reduced-motion and caps concurrency.
+  spawnBoo(key) {
+    if (!document.body.classList.contains('halloween')) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (document.querySelectorAll('.boo').length >= 6) return;
+
+    const btn = this.dom.keypad.querySelector(`button[data-key="${key}"]`);
+    const boo = document.createElement('div');
+    boo.className = 'boo';
+    boo.textContent = '👻';
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      boo.style.left = `${r.left + r.width / 2}px`;
+      boo.style.top = `${r.top}px`;
+    } else {
+      boo.style.left = '50%';
+      boo.style.top = '70%';
+    }
+    boo.style.setProperty('--drift', `${Math.round(Math.random() * 24 - 12)}px`);
+    document.body.appendChild(boo);
+    boo.addEventListener('animationend', () => boo.remove());
   }
 
   shakeCurrentRow() {

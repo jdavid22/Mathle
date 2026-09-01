@@ -25,13 +25,16 @@ class Game {
     if (localStorage.getItem('mathle-colorblind') === '1') {
       document.body.classList.add('colorblind');
     }
+    this._applyTheme();
 
     this._bindControls();
     this._bindInput();
     this.newGame('daily');
 
-    // Pop the help on load (unless a finished Daily is already showing).
-    if (this.status === 'playing') this.ui.openModal('help-modal');
+    // Pop the help on load, unless a finished Daily is showing or the player
+    // ticked "Don't show automatically".
+    const helpHidden = localStorage.getItem('mathle-help-hidden') === '1';
+    if (this.status === 'playing' && !helpHidden) this.ui.openModal('help-modal');
     // Re-fit once layout (and fonts) have fully settled.
     requestAnimationFrame(() => this.ui._fitBoard());
   }
@@ -94,11 +97,28 @@ class Game {
   }
 
   _addDigit(d) {
+    this.ui.spawnBoo(d); // seasonal flourish (no-op unless the Halloween theme is on)
     const I = this.input;
-    if (I.phase === 'a' && I.first.length < 2) I.first += d;
-    else if (I.phase === 'b' && I.second.length < 2) I.second += d;
-    else if (I.phase === 'c' && I.result.length < 4) I.result += d;
+    if (I.phase === 'a') {
+      I.first = this._appendDigit(I.first, d, 2);
+    } else if (I.phase === 'b') {
+      I.second = this._appendDigit(I.second, d, 2);
+      // A full two-digit second operand advances to the answer on its own, so
+      // "12 × 34" flows straight into the answer with no "=". (A one-digit
+      // second operand still needs "=" to mark where it ends.)
+      if (I.second.length === 2) I.phase = 'c';
+    } else if (I.phase === 'c') {
+      I.result = this._appendDigit(I.result, d, 4);
+    }
     this.render();
+  }
+
+  // Append a digit within a field's width. A leading zero is treated as a blank
+  // (typing "0" then "7" gives 7, shown as blank + 7) — friendlier entry of
+  // single-digit numbers for new players.
+  _appendDigit(current, d, maxLen) {
+    if (current.length >= maxLen) return current;
+    return (current + d).replace(/^0+(?=\d)/, '');
   }
 
   _setOperator(op) {
@@ -207,10 +227,14 @@ class Game {
   // ---- Sharing -----------------------------------------------------------
 
   shareText() {
-    const head = this.mode === 'daily' ? `Mathle #${this.dailyNumber}` : 'Mathle Unlimited';
+    const hw = this.halloween; // Halloween share swaps present→orange, absent→black
+    const name = hw ? '🎃 Mathle' : 'Mathle';
+    const head = this.mode === 'daily' ? `${name} #${this.dailyNumber}` : `${name} Unlimited`;
     const score = this.status === 'won' ? this.guesses.length : 'X';
-    const sq = { correct: '🟩', present: '🟨', absent: '⬜' };
-    const opSq = (s) => (s === 'correct' ? '🟩' : '⬜');
+    const sq = hw
+      ? { correct: '🟩', present: '🟧', absent: '⬛' }
+      : { correct: '🟩', present: '🟨', absent: '⬜' };
+    const opSq = (s) => (s === 'correct' ? '🟩' : hw ? '⬛' : '⬜');
     const lines = this.guesses.map((g) => {
       const first = g.fb.first.map((s) => sq[s]).join('');
       const second = g.fb.second.map((s) => sq[s]).join('');
@@ -219,6 +243,20 @@ class Game {
     });
     const url = `${location.origin}${location.pathname}`;
     return `${head} ${score}/6\n\n${lines.join('\n')}\n\n${url}`;
+  }
+
+  // Turn the Halloween skin on for Oct 26–31 (or via ?theme=halloween / ?theme=off).
+  _applyTheme() {
+    const param = new URLSearchParams(location.search).get('theme');
+    let on;
+    if (param === 'halloween') on = true;
+    else if (param === 'off') on = false;
+    else {
+      const d = new Date();
+      on = d.getMonth() === 9 && d.getDate() >= 26 && d.getDate() <= 31; // October 26–31
+    }
+    this.halloween = on;
+    document.body.classList.toggle('halloween', on);
   }
 
   async copyShare() {
@@ -286,6 +324,13 @@ class Game {
     });
 
     on('help-btn', () => this.ui.openModal('help-modal'));
+    const dismiss = document.getElementById('help-dismiss');
+    dismiss.checked = localStorage.getItem('mathle-help-hidden') === '1';
+    dismiss.addEventListener('change', () => {
+      try {
+        localStorage.setItem('mathle-help-hidden', dismiss.checked ? '1' : '0');
+      } catch { /* ignore */ }
+    });
     on('stats-btn', () => {
       this.ui.renderStats(this.stats.stats, this.stats);
       this.ui.openModal('stats-modal');
