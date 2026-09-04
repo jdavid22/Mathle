@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f1117" />
+  <title>Mathle Hardcore</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <!-- Sub-10s red edge flash. -->
+  <div id="hc-flash" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <h1>Mathle</h1>
+      <span class="hc-badge">Hardcore</span>
+    </div>
+    <div class="top-actions">
+      <a id="home-link" class="icon-btn" href="../" title="Back to normal Mathle" aria-label="Back to normal Mathle">←</a>
+      <button id="colorblind-btn" class="icon-btn" title="Colorblind mode" aria-label="Colorblind mode">◐</button>
+      <button id="help-btn" class="icon-btn" title="How to play" aria-label="Help">?</button>
+    </div>
+  </header>
+
+  <main class="game">
+    <section id="board" class="board" aria-label="Guesses"></section>
+
+    <section class="entropy" aria-label="Time left">
+      <div class="entropy-head">
+        <span class="entropy-label">Time left</span>
+        <span id="hc-timer" class="entropy-value">1:00</span>
+      </div>
+      <div class="entropy-track"><div id="hc-timer-bar" class="entropy-bar timer-bar"></div></div>
+    </section>
+
+    <section id="keypad" class="keypad" aria-label="Keypad">
+      <div class="key-row">
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+      </div>
+      <div class="key-row">
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key" data-key="0">0</button>
+      </div>
+      <div class="key-row">
+        <button class="key op-key" data-key="+">+</button>
+        <button class="key op-key" data-key="−">−</button>
+        <button class="key op-key" data-key="×">×</button>
+        <button class="key op-key" data-key="÷">÷</button>
+        <button class="key op-key key-eq" data-key="=" title="Move to the result">=</button>
+      </div>
+      <div class="key-row">
+        <button class="key wide" data-key="del">⌫ Delete</button>
+        <button class="key wide accent" data-key="enter">Enter</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="overlay" class="overlay"></div>
+
+  <div id="help-modal" class="modal">
+    <button class="modal-close" data-close aria-label="Close">×</button>
+    <h2>Hardcore mode</h2>
+    <p>The daily equation, against the clock. You get <strong>one attempt</strong>,
+       and the timer starts the moment you begin typing.</p>
+    <ul class="hc-rules">
+      <li><strong>60 seconds.</strong> When it hits zero, the round is over.</li>
+      <li><strong>6 guesses,</strong> with the same green / yellow / grey feedback.</li>
+      <li><strong>Every wrong calculation counts.</strong> A guess that doesn't add
+         up (like 10 × 12 = 119) burns a guess and turns red, with no colour hints.</li>
+    </ul>
+    <p>No replays, so make them count. Good luck.</p>
+    <a class="help-leave" href="../">← Go to normal Mathle</a>
+    <label class="help-dismiss"><input type="checkbox" id="help-dismiss" /> Don’t show this help page automatically</label>
+  </div>
+
+  <div id="gameover-modal" class="modal">
+    <button class="modal-close" data-close aria-label="Close">×</button>
+    <h2 id="hc-over-title">Solved!</h2>
+    <p id="hc-over-sub" class="gameover-sub"></p>
+    <div id="hc-over-eq" class="result-equation"></div>
+    <div class="gameover-actions">
+      <button id="hc-share" class="btn accent">Share</button>
+      <a class="btn" href="../">Back to Mathle</a>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Shared pure modules + the hardcore controller. -->
+  <script src="../js/constants.js"></script>
+  <script src="../js/rng.js"></script>
+  <script src="../js/equationMode.js"></script>
+  <script src="../js/dailyPuzzle.js"></script>
+  <script src="../js/uiRenderer.js"></script>
+  <script src="../js/hardcore.js"></script>
+</body>
+</html>

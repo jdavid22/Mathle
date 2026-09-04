@@ -16,6 +16,8 @@ http
   .createServer((req, res) => {
     let urlPath = decodeURIComponent(req.url.split('?')[0]);
     if (urlPath === '/') urlPath = '/index.html';
+    // Directory-style routes (e.g. /hardcore) serve their index.html.
+    else if (!path.extname(urlPath)) urlPath = urlPath.replace(/\/+$/, '') + '/index.html';
     const filePath = path.join(ROOT, urlPath);
     if (!filePath.startsWith(ROOT)) {
       res.writeHead(403);

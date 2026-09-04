@@ -638,3 +638,72 @@ body.halloween::after  { right: 0; transform: scaleX(-1); }
 @media (prefers-reduced-motion: reduce) {
   .boo { display: none; }
 }
+
+/* ============================================================
+   Hardcore mode (/hardcore) — shared styles used by hardcore/index.html
+   ============================================================ */
+.hc-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ff5470;
+  background: rgba(255, 84, 112, 0.12);
+  border: 1px solid rgba(255, 84, 112, 0.4);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+/* Wrong-calculation row: solid muted-crimson tiles, no grading. */
+.tile.invalid,
+.tile.blank.invalid {
+  background: #a3324b;
+  border-color: #a3324b;
+  border-style: solid;
+  color: #fff;
+}
+
+/* Countdown timer reuses the meter styling; add a linear width tween + urgency. */
+.timer-bar { transition: width 0.25s linear; }
+.entropy-value.urgent { color: #ff5470; }
+.entropy-bar.urgent { background: linear-gradient(90deg, #ff2d2d, #ff7a3c); }
+
+/* Under 10s: a restrained but stressful red edge-flash. Vivid red, distinct
+   from the crimson wrong-calc tiles. */
+#hc-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(125% 95% at 50% 50%, transparent 55%, rgba(255, 40, 40, 0.30) 100%);
+}
+body.hc-urgent #hc-flash { animation: hcFlash 1s ease-in-out infinite; }
+@keyframes hcFlash {
+  0%, 100% { opacity: 0.12; }
+  50% { opacity: 0.72; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.hc-urgent #hc-flash { animation: none; opacity: 0.4; }
+}
+
+.hc-rules { margin: 8px 0 4px; padding-left: 18px; }
+.hc-rules li { margin: 6px 0; }
+.gameover-actions a.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* Leave-hardcore link in the help modal. */
+.help-leave {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+.help-leave:hover { text-decoration: underline; }

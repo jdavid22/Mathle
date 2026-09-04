@@ -138,13 +138,24 @@ class UIRenderer {
 
       if (guess) {
         const justRevealed = row === game.guesses.length - 1 && game.justSubmitted;
-        eq.appendChild(this._field(padCells(guess.a, 2), guess.fb.first, guess.fb.firstHint, justRevealed));
-        eq.appendChild(this._makeTile(guess.op, guess.fb.operator, true));
-        eq.appendChild(this._field(padCells(guess.b, 2), guess.fb.second, guess.fb.secondHint, justRevealed));
-        eq.appendChild(this._separator());
-        eq.appendChild(this._field(padCells(guess.c, 4), guess.fb.result, null, justRevealed));
+        if (guess.invalid) {
+          // Hardcore mode: a wrong calculation counts as a guess but earns no
+          // colour grading — the whole row shows red.
+          const red = (n, w) => this._field(padCells(n, w), new Array(w).fill('invalid'), null, justRevealed);
+          eq.appendChild(red(guess.a, 2));
+          eq.appendChild(this._makeTile(guess.op, 'invalid', true));
+          eq.appendChild(red(guess.b, 2));
+          eq.appendChild(this._separator());
+          eq.appendChild(red(guess.c, 4));
+        } else {
+          eq.appendChild(this._field(padCells(guess.a, 2), guess.fb.first, guess.fb.firstHint, justRevealed));
+          eq.appendChild(this._makeTile(guess.op, guess.fb.operator, true));
+          eq.appendChild(this._field(padCells(guess.b, 2), guess.fb.second, guess.fb.secondHint, justRevealed));
+          eq.appendChild(this._separator());
+          eq.appendChild(this._field(padCells(guess.c, 4), guess.fb.result, null, justRevealed));
+          if (justRevealed && game.status === 'won') rowEl.classList.add('win-bounce');
+        }
         rowEl.appendChild(eq);
-        if (justRevealed && game.status === 'won') rowEl.classList.add('win-bounce');
       } else if (isCurrent) {
         const I = game.input;
         // A one-digit second operand won't auto-advance, so nudge toward "=".
@@ -219,6 +230,7 @@ class UIRenderer {
       });
     };
     for (const g of game.guesses) {
+      if (g.invalid) continue; // hardcore red rows carry no grading
       scan(padCells(g.a, 2), g.fb.first);
       scan(padCells(g.b, 2), g.fb.second);
       scan(padCells(g.c, 4), g.fb.result);
